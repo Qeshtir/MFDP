@@ -1,0 +1,8 @@
+/venv/
+/app/.ruff_cache/
+/app/database/database.ini
+/app/.env
+/app/notebooks/winequality-red.csv
+/app/artifacts/
+/app/services/ml/params.py
+/app/.env
