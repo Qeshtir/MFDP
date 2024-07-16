@@ -34,6 +34,7 @@ services:
       - 15672:15672
       - 5672:5672
 
+
   postgres:
     image: postgres:13.3-alpine
     hostname: db
@@ -56,6 +57,9 @@ services:
       rabbitmq:
         condition: service_started
     restart: on-failure
+    deploy:
+      mode: replicated
+      replicas: 2
 
   gui:
     build: ./app/
