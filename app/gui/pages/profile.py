@@ -80,8 +80,13 @@ def get_prediction():
     return res
 
 
+# Initialize session state
+if 'first_form_completed' not in st.session_state:
+    st.session_state['first_form_completed'] = False
+
+
 with st.form("df enter"):
-    prediction = None
+    #prediction = None
     st.subheader("Форма для получения предсказания")
 
     st.write("Данные, которые можно получить с клиента")
@@ -188,6 +193,8 @@ with st.form("df enter"):
         if result.status_code == 200:
             message = result.json()["message"]
             prediction = get_prediction().json()
+            st.session_state['first_form_completed'] = True
+            st.session_state['prediction'] = prediction
         else:
             st.write(result.json())
 
@@ -196,15 +203,35 @@ with st.form("df enter"):
 def load_data():
     return pd.read_csv(data_path)
 
+if 'pred_completed' not in st.session_state:
+    st.session_state['pred_completed'] = False
 
-if prediction:
-    st.subheader(f"Congratz! Your default proba is {prediction[1]} 🎉")
-    st.write(
-        f"However, I we're not sure, if client will have a default or not, so here is some interpret data, for making us more confident:"
-    )
-    data = load_data()
 
-    #hist_values = np.histogram(data["quality"], bins=9, range=(0, 8))[0]
-    #st.bar_chart(hist_values)
-    st.write(data.describe())
-    st.write(data.head(100))
+
+if st.session_state['first_form_completed']:
+        st.subheader(f"Вероятность дефолта: {round(prediction[1]*100, 2)}% 🎉")
+
+        intervals = load_data()
+
+        # расчёт интервала
+        pred_interval = len(intervals[intervals["right_border"] < prediction[1]]) - 1
+
+        # инициируем светофочик
+
+        if intervals["conversion"][pred_interval] > 0.98:
+            st.success("Смело одобряйте кредит этому клиенту!")
+            st.session_state['first_form_completed'] = False
+            st.session_state['pred_completed'] = True
+            st.button("Калькулятор, появись!")
+
+        elif (intervals["conversion"][pred_interval] <= 0.98) & (intervals["conversion"][pred_interval] > 0.9):
+            st.warning("Это хороший клиент. Одобрение можно уточнить на калькуляторе, впрочем, делать этого не обязательно")
+            st.session_state['first_form_completed'] = False
+            st.session_state['pred_completed'] = True
+            st.button("Калькулятор, появись!")
+
+        else:
+            st.error("Это одобрение может быть плохим решением. Воспользуйтесь калькулятором прибыли.")
+            st.session_state['first_form_completed'] = False
+            st.session_state['pred_completed'] = True
+            st.button("Калькулятор, появись!")

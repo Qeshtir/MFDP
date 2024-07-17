@@ -23,6 +23,8 @@ def make_sidebar():
         if st.session_state.get("logged_in", False):
             st.page_link("pages/profile.py", label="Prediction data", icon="🔒")
             st.page_link("pages/history.py", label="Interaction history", icon="🥇")
+            if st.session_state.get("pred_completed", False):
+                st.page_link("pages/calc.py", label="Calculator", icon="🎲")
 
             st.write("")
             st.write("")
