@@ -7,7 +7,6 @@ from decouple import config
 make_sidebar()
 
 
-@st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
     return stx.CookieManager()
 
