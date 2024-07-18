@@ -3,16 +3,18 @@ import streamlit as st
 from auth.jwt_handler import verify_access_token
 from gui.navigation import make_sidebar
 import pandas as pd
-import numpy as np
-import json
 from decouple import config
+import yaml
+
+locale_path = config("LOCALE_PATH")
+
+with open(locale_path, 'r') as file:
+    dict_ = yaml.safe_load(file)
+dict_ = dict_["profile"]
 
 make_sidebar()
 
-
-st.title("Привет")
-
-st.write("Здесь всё будет на русском, просто потому что данные в задаче трудно интерпретировать")
+st.title(dict_["title"])
 
 cookies = st.session_state["user_cookie"]
 user_id = verify_access_token(cookies)["user"]
@@ -60,7 +62,7 @@ def df_entered():
             "EXT_SOURCE_3": EXT_SOURCE_3,
         },
     }
-    res = httpx.post(url=localhost+"df/add/", json=data, headers=header)
+    res = httpx.post(url=localhost + "df/add/", json=data, headers=header)
     return res.json()
 
 
@@ -69,14 +71,14 @@ def create_task():
     st.session_state["user_df"] = user_df
     data = {"userid": user_id, "user_df_id": user_df, "status": "created"}
     res = httpx.post(
-        url=localhost+"task/execute/", json=data, headers=header
+        url=localhost + "task/execute/", json=data, headers=header
     )
     return res
 
 
 def get_prediction():
     user_df = st.session_state["user_df"]
-    res = httpx.get(url=localhost+"df/get/"+str(user_df))
+    res = httpx.get(url=localhost + "df/get/" + str(user_df))
     return res
 
 
@@ -84,111 +86,115 @@ def get_prediction():
 if 'first_form_completed' not in st.session_state:
     st.session_state['first_form_completed'] = False
 
-
 with st.form("df enter"):
-    #prediction = None
-    st.subheader("Форма для получения предсказания")
+    st.subheader(dict_["subHeader"])
 
-    st.write("Данные, которые можно получить с клиента")
-    st.caption("Здесь содержится блок данных, которые можно получить опросом клиента при звонке или заполнении формы на сайте")
+    st.write(dict_["userData"]["desc"])
+    st.caption(dict_["userData"]["caption"])
 
-    AMT_INCOME_TOTAL = st.number_input(label="Годовой доход клиента", value= 261000.0, min_value=0.1,
-                                       help="Не может быть 0, мы же не хотим выдавать ипотеку людям, не имеющим дохода?")
-    FLAG_OWN_CAR = st.number_input(label="Наличие машины", value= 1.0, min_value=0.0, max_value=1.0, step=1.0,
-                                       help="1.0 или 0.0. Здесь должен быть флаг, но для реализации так проще.")
-    OWN_CAR_AGE = st.number_input(label="Возраст машины", value= 8.0, min_value=0.0,
-                                       help="Возраст машины клиента, 0 если машины нет")
-    ORGANIZATION_TYPE_Self_employed = st.number_input(label="Признак самозанятости", value=0.0, min_value=0.0, max_value=1.0, step=1.0,
-                                       help="1.0 или 0.0. Здесь должен быть флаг, но для реализации так проще.")
-    DAYS_BIRTH = st.number_input(label="Возраст клиента", value=-16499, min_value=-43800, max_value=-6570, step=1,
-                                       help="В днях, относительно текущей даты. Всегда отрицательное число, не может быть меньше 18 лет")
-    HOUSETYPE_MODE_block_of_flats = st.number_input(label="Признак многоквартирности", value=1.0, min_value=0.0, max_value=1.0, step=1.0,
-                                       help="1.0 или 0.0, по типу жилья, в котором проживает клиент. Здесь должен быть флаг, но для реализации так проще.")
+    AMT_INCOME_TOTAL = st.number_input(label=dict_["userData"]["AMT_INCOME_TOTAL"]["label"], value=261000.0,
+                                       min_value=0.1,
+                                       help=dict_["userData"]["AMT_INCOME_TOTAL"]["help"])
+    FLAG_OWN_CAR = st.number_input(label=dict_["userData"]["FLAG_OWN_CAR"]["label"], value=1.0, min_value=0.0,
+                                   max_value=1.0, step=1.0,
+                                   help=dict_["userData"]["FLAG_OWN_CAR"]["help"])
+    OWN_CAR_AGE = st.number_input(label=dict_["userData"]["OWN_CAR_AGE"]["label"], value=8.0, min_value=0.0,
+                                  help=dict_["userData"]["OWN_CAR_AGE"]["help"])
+    ORGANIZATION_TYPE_Self_employed = st.number_input(
+        label=dict_["userData"]["ORGANIZATION_TYPE_Self_employed"]["label"], value=0.0, min_value=0.0, max_value=1.0,
+        step=1.0,
+        help=dict_["userData"]["ORGANIZATION_TYPE_Self_employed"]["help"])
+    DAYS_BIRTH = st.number_input(label=dict_["userData"]["DAYS_BIRTH"]["label"], value=-16499, min_value=-43800,
+                                 max_value=-6570, step=1,
+                                 help=dict_["userData"]["DAYS_BIRTH"]["help"])
+    HOUSETYPE_MODE_block_of_flats = st.number_input(label=dict_["userData"]["HOUSETYPE_MODE_block_of_flats"]["label"],
+                                                    value=1.0, min_value=0.0, max_value=1.0, step=1.0,
+                                                    help=dict_["userData"]["HOUSETYPE_MODE_block_of_flats"]["help"])
 
+    st.write(dict_["userDataCalc"]["desc"])
+    st.caption(dict_["userDataCalc"]["caption"])
 
-    st.write("Данные клиента, предрассчитанные")
-    st.caption(
-        "Здесь содержится блок данных, которые можно получить у клиента, но они требуют агрегации, и в интерфейсе пользователя"
-        "должны отображаться автоматически. Тем не менее, здесь, в рамках демо, мы сделаем их изменяемыми")
+    st.write(dict_["userDataCalc"]["bkiDesc"])
 
-    st.write("Данные об обращении в БКИ")
+    AMT_REQ_CREDIT_BUREAU_QRT = st.number_input(label=dict_["userDataCalc"]["AMT_REQ_CREDIT_BUREAU_QRT"]["label"],
+                                                value=0.0, step=1.0, min_value=0.0,
+                                                help=dict_["userDataCalc"]["AMT_REQ_CREDIT_BUREAU_QRT"]["help"])
 
-    AMT_REQ_CREDIT_BUREAU_QRT = st.number_input(label="Количество обращений клиента в кредитное бюро", value=0.0, step=1.0, min_value=0.0,
-                                       help="Количество обращений клиента в кредитное бюро за квартал до месяца, предшествующего подаче заявки")
+    st.write(dict_["userDataCalc"]["houseDesc"])
 
-    st.write("Данные о недвижимости клиента, нормализованные")
+    BASEMENTAREA_AVG = st.number_input(label=dict_["userDataCalc"]["BASEMENTAREA_AVG"]["label"], value=0.092500,
+                                       min_value=0.0, format="%.6f")
+    LANDAREA_AVG = st.number_input(label=dict_["userDataCalc"]["LANDAREA_AVG"]["label"], value=0.127900, min_value=0.0,
+                                   format="%.6f")
+    FLOORSMIN_AVG = st.number_input(label=dict_["userDataCalc"]["FLOORSMIN_AVG"]["label"], value=0.208300,
+                                    min_value=0.0, format="%.6f")
+    FLOORSMAX_AVG = st.number_input(label=dict_["userDataCalc"]["FLOORSMAX_AVG"]["label"], value=0.166700,
+                                    min_value=0.0, format="%.6f")
+    NONLIVINGAREA_AVG = st.number_input(label=dict_["userDataCalc"]["NONLIVINGAREA_AVG"]["label"], value=0.017000,
+                                        min_value=0.0, format="%.6f")
+    APARTMENTS_AVG = st.number_input(label=dict_["userDataCalc"]["APARTMENTS_AVG"]["label"], value=0.158800,
+                                     min_value=0.0, format="%.6f")
+    NONLIVINGAPARTMENTS_AVG = st.number_input(label=dict_["userDataCalc"]["NONLIVINGAPARTMENTS_AVG"]["label"],
+                                              value=0.0, min_value=0.0, format="%.6f")
+    YEARS_BUILD_AVG = st.number_input(label=dict_["userDataCalc"]["YEARS_BUILD_AVG"]["label"], value=0.755200,
+                                      min_value=0.0, format="%.6f")
+    COMMONAREA_AVG = st.number_input(label=dict_["userDataCalc"]["COMMONAREA_AVG"]["label"], value=0.019100,
+                                     min_value=0.0, format="%.6f",
+                                     help=dict_["userDataCalc"]["COMMONAREA_AVG"]["help"])
+    YEARS_BEGINEXPLUATATION_AVG = st.number_input(label=dict_["userDataCalc"]["YEARS_BEGINEXPLUATATION_AVG"]["label"],
+                                                  value=0.982100, min_value=0.0, format="%.6f")
 
-    BASEMENTAREA_AVG = st.number_input(label="Средняя площадь подвала", value=0.092500, min_value=0.0, format="%.6f")
-    LANDAREA_AVG = st.number_input(label="Средняя площадь придомовой территории", value=0.127900, min_value=0.0, format="%.6f")
-    FLOORSMIN_AVG = st.number_input(label="Среднее минимальное количество этажей жилья", value=0.208300, min_value=0.0, format="%.6f")
-    FLOORSMAX_AVG = st.number_input(label="Среднее максимальное количество этажей жилья", value=0.166700, min_value=0.0, format="%.6f")
-    NONLIVINGAREA_AVG = st.number_input(label="Средняя нежилая площадь (всего)", value=0.017000, min_value=0.0, format="%.6f")
-    APARTMENTS_AVG = st.number_input(label="Средняя жилая площадь", value=0.158800, min_value=0.0, format="%.6f")
-    NONLIVINGAPARTMENTS_AVG = st.number_input(label="Средняя нежилая площадь апартаментов", value=0.0, min_value=0.0, format="%.6f")
-    YEARS_BUILD_AVG = st.number_input(label="Средний возраст жилья в годах", value=0.755200, min_value=0.0, format="%.6f")
-    COMMONAREA_AVG = st.number_input(label="Средняя площадь общего назначения", value=0.019100, min_value=0.0, format="%.6f",
-                                     help="Параметр плохо поддаётся интерпретации, в России бы такое место называлось МОП, но оно не является частной собственностью")
-    YEARS_BEGINEXPLUATATION_AVG = st.number_input(label="Средний возраст жилья в годах", value=0.982100, min_value=0.0, format="%.6f")
+    st.write(dict_["bki"]["desc"])
+    st.caption(dict_["bki"]["caption"])
+    st.caption(dict_["bki"]["caption2"])
 
-    st.write("Данные БКИ, предрассчитанные")
-    st.caption(
-        "Здесь содержится блок данных, которые можно получить у БКИ, но они требуют агрегации, и в интерфейсе пользователя"
-        "должны отображаться автоматически. Тем не менее, здесь, в рамках демо, мы сделаем их изменяемыми")
-    st.caption(
-        "Важно! Эти параметры могут быть не заполненными, т.к. тех или иных данных по клиенту может не быть. В качестве иллюстрации"
-        "для такой возможности выбран параметр 'Минимальная сумма открытой задолженности по кредиту'")
+    bureau_AMT_CREDIT_SUM_min = st.number_input(label=dict_["bki"]["bureau_AMT_CREDIT_SUM_min"]["label"], value=0.0,
+                                                min_value=0.0)
+    bureau_AMT_CREDIT_SUM_DEBT_max = st.number_input(label=dict_["bki"]["bureau_AMT_CREDIT_SUM_DEBT_max"]["label"],
+                                                     value=638496.0)
+    bureau_DAYS_CREDIT_UPDATE_mean = st.number_input(label=dict_["bki"]["bureau_DAYS_CREDIT_UPDATE_mean"]["label"],
+                                                     value=-250.666667,
+                                                     help=dict_["bki"]["bureau_DAYS_CREDIT_UPDATE_mean"]["help"])
+    bureau_DAYS_CREDIT_UPDATE_max = st.number_input(label=dict_["bki"]["bureau_DAYS_CREDIT_UPDATE_max"]["label"],
+                                                    value=-15.0,
+                                                    help=dict_["bki"]["bureau_DAYS_CREDIT_UPDATE_max"]["help"])
+    bureau_DAYS_ENDDATE_FACT_max = st.number_input(label=dict_["bki"]["bureau_DAYS_ENDDATE_FACT_max"]["label"],
+                                                   value=-813.0, max_value=0.0,
+                                                   help=dict_["bki"]["bureau_DAYS_ENDDATE_FACT_max"]["help"])
+    bureau_DAYS_CREDIT_ENDDATE_max = st.number_input(label=dict_["bki"]["bureau_DAYS_CREDIT_ENDDATE_max"]["label"],
+                                                     value=1043.0,
+                                                     help=dict_["bki"]["bureau_DAYS_CREDIT_ENDDATE_max"]["help"])
+    bureau_AMT_CREDIT_SUM_DEBT_min = st.number_input(label=dict_["bki"]["bureau_AMT_CREDIT_SUM_DEBT_min"]["label"],
+                                                     value=None, placeholder=0.0)
 
-    bureau_AMT_CREDIT_SUM_min = st.number_input(label="Минимальная сумма открытого кредита", value=0.0, min_value=0.0)
-    bureau_AMT_CREDIT_SUM_DEBT_max = st.number_input(label="Максимальная сумма открытой задолженности по кредиту", value=638496.0)
-    bureau_DAYS_CREDIT_UPDATE_mean = st.number_input(label="Как давно, в среднем, менялись данные БКИ", value=-250.666667,
-                                                     help="Количество дней до подачи заявки, "
-                                                          "за которое происходило последнее обновление по кредитам аппликанта, "
-                                                          "может быть положительной (допришедшие данные после подачи заявки) может быть 0."
-                                                          "Описательная статистика, среднее по аппликанту.")
-    bureau_DAYS_CREDIT_UPDATE_max = st.number_input(label="Как давно в последний раз менялись данные БКИ", value=-15.0,
-                                                    help="Количество дней до подачи заявки, "
-                                                         "за которое происходило последнее обновление по кредитам аппликанта, "
-                                                         "может быть положительной (допришедшие данные после подачи заявки) может быть 0."
-                                                         "Описательная статистика, максимум по аппликанту.")
-    bureau_DAYS_ENDDATE_FACT_max = st.number_input(label="Когда закрыт последний кредит", value=-813.0, max_value=0.0,
-                                                   help="Количество дней, прошедших с момента закрытия предыдущего кредита, 0.0 - в дату подачи заявки.")
+    st.write(dict_["bank"]["desc"])
+    st.caption(dict_["bank"]["caption"])
+    st.caption(dict_["bank"]["caption2"])
 
-    bureau_DAYS_CREDIT_ENDDATE_max = st.number_input(label="Когда будет закрыт самый долгий кредит", value=1043.0,
-                                                     help="0.0 или отрицательное число - он уже закрыт.")
-    bureau_AMT_CREDIT_SUM_DEBT_min = st.number_input(label="Минимальная сумма открытой задолженности по кредиту", value=None, placeholder=0.0)
+    prev_SELLERPLACE_AREA_min = st.number_input(label=dict_["bank"]["prev_SELLERPLACE_AREA_min"]["label"], value=4.0,
+                                                min_value=-1.0,
+                                                help=dict_["bank"]["prev_SELLERPLACE_AREA_min"]["help"])
+    prev_AMT_DOWN_PAYMENT_mean = st.number_input(label=dict_["bank"]["prev_AMT_DOWN_PAYMENT_mean"]["label"], value=0.0,
+                                                 min_value=0.0)
+    prev_WEEKDAY_APPR_PROCESS_START_SATURDAY_count_norm = st.number_input(label=dict_["bank"]["prev_SATURDAY"]["label"],
+                                                                          value=0.0, min_value=0.0,
+                                                                          help=dict_["bank"]["prev_SATURDAY"]["help"])
+    prev_NAME_GOODS_CATEGORY_Furniture_count_norm = st.number_input(label=dict_["bank"]["prev_Furniture"]["label"],
+                                                                    value=0.0, min_value=0.0,
+                                                                    help=dict_["bank"]["prev_Furniture"]["help"])
+    prev_CNT_PAYMENT_mean = st.number_input(label=dict_["bank"]["prev_CNT_PAYMENT_mean"]["label"], value=36.0,
+                                            min_value=0.0)
 
-    st.write("Данные истории банка, предрассчитанные")
-    st.caption(
-        "Здесь содержится блок данных, которые можно получить у банка в рамках прошлых взаимодействий с клиентом, но они требуют агрегации, и в интерфейсе пользователя"
-        "должны отображаться автоматически. Тем не менее, здесь, в рамках демо, мы сделаем их изменяемыми.")
-    st.caption(
-        "Важно! Эти параметры могут быть не заполненными, т.к. тех или иных данных по клиенту может не быть. Пример подобной ситуации иллюстрирован выше.")
+    st.write(dict_["scoring"]["desc"])
+    st.caption(dict_["scoring"]["caption"])
 
-    prev_SELLERPLACE_AREA_min = st.number_input(label="Минимальная торговая площадь места продавца", value=4.0, min_value=-1.0,
-                                                help="0.0 - нет площади, отрицательное число - не продавец.")
-    prev_AMT_DOWN_PAYMENT_mean = st.number_input(label="Средний аванс предыдущего кредита", value=0.0, min_value=0.0)
-    prev_WEEKDAY_APPR_PROCESS_START_SATURDAY_count_norm = st.number_input(label="Как часто в среднем день оформления кредита был субботой?", value=0.0, min_value=0.0,
-                                                            help = "Пожалуй, самый забавный признак. Это среднее значение всех раз,"
-                                                                   "когда клиент обращался за предыдущим кредитом в субботу."
-                                                                          )
-    prev_NAME_GOODS_CATEGORY_Furniture_count_norm = st.number_input(label="Как часто в среднем предмет кредита был мебелью?", value=0.0, min_value=0.0,
-                                                            help = "Тоже забавный признак. Это среднее значение всех раз,"
-                                                                   "когда клиент обращался за кредитом именно на мебель."
-                                                                          )
-    prev_CNT_PAYMENT_mean = st.number_input(label="Средний срок предыдущего кредита", value=36.0, min_value=0.0)
+    EXT_SOURCE_1 = st.number_input(label=dict_["scoring"]["EXT_SOURCE_1"], value=0.560240, min_value=0.0, format="%.6f")
+    EXT_SOURCE_2 = st.number_input(label=dict_["scoring"]["EXT_SOURCE_2"], value=0.552325, min_value=0.0, format="%.6f")
+    EXT_SOURCE_3 = st.number_input(label=dict_["scoring"]["EXT_SOURCE_3"], value=0.429424, min_value=0.0, format="%.6f")
 
-    st.write("Данные кредитного скоринга")
-    st.caption(
-        "В оригинальном датасете эти данные были кодированы и нормализованы. Подобные вещи в интерфейсе пользователя"
-        "должны отображаться автоматически. Тем не менее, здесь, в рамках демо, мы сделаем их изменяемыми.")
-
-    EXT_SOURCE_1 = st.number_input(label="Значение скоринга, первая компонента", value=0.560240, min_value=0.0, format="%.6f")
-    EXT_SOURCE_2 = st.number_input(label="Значение скоринга, вторая компонента", value=0.552325, min_value=0.0, format="%.6f")
-    EXT_SOURCE_3 = st.number_input(label="Значение скоринга, третья компонента", value=0.429424, min_value=0.0, format="%.6f")
-
-    submit = st.form_submit_button("Предсказать дефолт!")
+    submit = st.form_submit_button(dict_["defaultButton"])
     if submit:
-        st.write(f"Please, wait a couple of seconds. Prediction will take some time")
+        st.write(dict_["waitingMessage"])
         result = create_task()
         if result.status_code == 200:
             message = result.json()["message"]
@@ -203,35 +209,34 @@ with st.form("df enter"):
 def load_data():
     return pd.read_csv(data_path)
 
+
 if 'pred_completed' not in st.session_state:
     st.session_state['pred_completed'] = False
 
-
-
 if st.session_state['first_form_completed']:
-        st.subheader(f"Вероятность дефолта: {round(prediction[1]*100, 2)}% 🎉")
+    st.subheader(dict_["defaultProba"] + str(round(prediction[1] * 100, 2)) + dict_["defaultProbaIcon"])
 
-        intervals = load_data()
+    intervals = load_data()
 
-        # расчёт интервала
-        pred_interval = len(intervals[intervals["right_border"] < prediction[1]]) - 1
+    # расчёт интервала
+    pred_interval = len(intervals[intervals["right_border"] < prediction[1]]) - 1
 
-        # инициируем светофочик
+    # инициируем светофочик
 
-        if intervals["conversion"][pred_interval] > 0.98:
-            st.success("Смело одобряйте кредит этому клиенту!")
-            st.session_state['first_form_completed'] = False
-            st.session_state['pred_completed'] = True
-            st.button("Калькулятор, появись!")
+    if intervals["conversion"][pred_interval] > 0.98:
+        st.success(dict_["green"])
+        st.session_state['first_form_completed'] = False
+        st.session_state['pred_completed'] = True
+        st.button(dict_["buttonCalc"])
 
-        elif (intervals["conversion"][pred_interval] <= 0.98) & (intervals["conversion"][pred_interval] > 0.9):
-            st.warning("Это хороший клиент. Одобрение можно уточнить на калькуляторе, впрочем, делать этого не обязательно")
-            st.session_state['first_form_completed'] = False
-            st.session_state['pred_completed'] = True
-            st.button("Калькулятор, появись!")
+    elif (intervals["conversion"][pred_interval] <= 0.98) & (intervals["conversion"][pred_interval] > 0.9):
+        st.warning(dict_["yellow"])
+        st.session_state['first_form_completed'] = False
+        st.session_state['pred_completed'] = True
+        st.button(dict_["buttonCalc"])
 
-        else:
-            st.error("Это одобрение может быть плохим решением. Воспользуйтесь калькулятором прибыли.")
-            st.session_state['first_form_completed'] = False
-            st.session_state['pred_completed'] = True
-            st.button("Калькулятор, появись!")
+    else:
+        st.error(dict_["red"])
+        st.session_state['first_form_completed'] = False
+        st.session_state['pred_completed'] = True
+        st.button(dict_["buttonCalc"])

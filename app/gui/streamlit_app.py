@@ -3,6 +3,13 @@ import extra_streamlit_components as stx
 import httpx
 from navigation import make_sidebar
 from decouple import config
+import yaml
+
+locale_path = config("LOCALE_PATH")
+
+with open(locale_path, 'r') as file:
+    dict_ = yaml.safe_load(file)
+dict_ = dict_["stApp"]
 
 make_sidebar()
 
@@ -35,22 +42,23 @@ def create_user():
         "password": p_assword,
         "role": "user",
     }
-    res = httpx.post(url=localhost+ "user/signup", json=data)
+    res = httpx.post(url=localhost + "user/signup", json=data)
     return res
 
 
-st.title("Welcome to the Default Default app. The default app for predicting default.")
+st.title(dict_["title"])
+st.subheader(dict_["subHeader"])
 st.image(image="gui/bank.jpg")
 
-tab1, tab2 = st.tabs(["Login", "Register"])
+tab1, tab2 = st.tabs([dict_["loginTab"], dict_["registerTab"]])
 
 with tab1:
-    st.write(f"Please log in to continue.")
-    st.write("If you don't have a user, tap Register tab and proceed.")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
+    st.write(dict_["login"])
+    st.write(dict_["loginNew"])
+    username = st.text_input(dict_["username"])
+    password = st.text_input(dict_["password"], type="password")
 
-    if st.button("Sign in", type="primary"):
+    if st.button(dict_["loginButton"], type="primary"):
         result = password_entered()
         if result.status_code in [401, 404]:
             error_desc = result.json()["detail"]
@@ -59,21 +67,21 @@ with tab1:
             val = result.json()["access_token"]
             cookie_manager.set("access_token", val, max_age=600)
             st.session_state.logged_in = True
-            st.success("Logged in successfully!")
+            st.success(dict_["loginSuccess"])
             st.session_state["user_cookie"] = cookie_manager.get(cookie="access_token")
 
             st.switch_page("pages/profile.py")
 
 with tab2:
-    st.write(f"Please register a new user to continue, if you dont have one already.")
-    st.write("You can create a demo user with swagger api.")
-    st.write("If you already have a user, tap Login tab and proceed.")
-    firstname = st.text_input("Firstname")
-    lastname = st.text_input("Lastname")
-    login = st.text_input("Login (try to make it unique)")
-    p_assword = st.text_input("Password")
+    st.write(dict_["registerBase"])
+    st.write(dict_["registerApi"])
+    st.write(dict_["registerExist"])
+    firstname = st.text_input(dict_["regName"])
+    lastname = st.text_input(dict_["regLastName"])
+    login = st.text_input(dict_["regLogin"])
+    p_assword = st.text_input(dict_["regPassword"])
 
-    if st.button("Sign up", type="primary"):
+    if st.button(dict_["registerButton"], type="primary"):
         result = create_user()
         if result.status_code == 200:
             message = result.json()

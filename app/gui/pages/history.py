@@ -4,12 +4,19 @@ import httpx
 from auth.jwt_handler import verify_access_token
 import pandas as pd
 from decouple import config
+import yaml
+
+locale_path = config("LOCALE_PATH")
+
+with open(locale_path, 'r') as file:
+    dict_ = yaml.safe_load(file)
+dict_ = dict_["history"]
 
 make_sidebar()
 
-st.title("This is your operations history")
+st.title(dict_["title"])
 
-st.write("Full list of user interactions with system")
+st.write(dict_["desc"])
 
 
 cookies = st.session_state["user_cookie"]
@@ -28,9 +35,7 @@ def get_user_transactions():
 
 result = get_user_transactions()
 if len(result) == 0:
-    st.write(
-        "Oops, no interactions here! Its time to make some! Proceed to Prediction data tab and make a prediction!"
-    )
+    st.write(dict_["empty"])
 else:
     df = pd.json_normalize(result)
     st.dataframe(df, hide_index=True)

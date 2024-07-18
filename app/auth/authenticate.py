@@ -5,9 +5,6 @@ from services.auth.cookieauth import OAuth2PasswordBearerWithCookie
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/signin")
 
-# ToDo RBAC via from starlette.middleware.base import BaseHTTPMiddleware
-# https://medium.com/@abdulwasa.abdulkader/how-to-implement-a-simple-role-based-access-control-rbac-in-fastapi-using-middleware-af07d31efa9f
-
 
 async def authenticate(token: str = Depends(oauth2_scheme)) -> str:
     if not token:
