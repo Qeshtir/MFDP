@@ -7,7 +7,7 @@ import yaml
 
 locale_path = config("LOCALE_PATH")
 
-with open(locale_path, 'r') as file:
+with open(locale_path, "r") as file:
     dict_ = yaml.safe_load(file)
 dict_ = dict_["nav"]
 

@@ -86,7 +86,6 @@ def test_task_creation(client: TestClient):
     prediction = {"prediction": 5}
     client.put("/df/edit/1", json=prediction)
 
-
     # Task create and update all in one
     session = session_fix()
     task = Task(
@@ -110,10 +109,10 @@ def test_task_creation_negative(client: TestClient):
     # Imitate rejection
     session = session_fix()
     task = Task(
-            userid=1,
-            user_df_id=1,
-            status="rejected",
-            end_date=datetime.datetime.now(),
+        userid=1,
+        user_df_id=1,
+        status="rejected",
+        end_date=datetime.datetime.now(),
     )
     TasksService.create_task(task, session)
 

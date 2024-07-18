@@ -122,7 +122,7 @@ class UserDataFrame(SQLModel, table=True):
 
         # NoneType is appliable for our model, so we just change a type of object columns to float
         object_columns = dataset.loc[:, dataset.dtypes == object].columns
-        dataset[object_columns] = dataset[object_columns].astype('float')
+        dataset[object_columns] = dataset[object_columns].astype("float")
 
         self.dataset = pickle.dumps(dataset)
 
