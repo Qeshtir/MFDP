@@ -21,6 +21,7 @@ import datetime
 from decouple import config
 
 import warnings
+
 warnings.filterwarnings("ignore")
 
 model_path = config("MODEL_PATH")
@@ -40,6 +41,7 @@ channel.queue_declare(queue=queue_name)  # Создание очереди (ес
 #  load model
 model = joblib.load(model_path)
 
+
 def make_prediction(ch, method, properties, body):
     message = pickle.loads(body)
     task = message["task"]
@@ -47,7 +49,6 @@ def make_prediction(ch, method, properties, body):
     user_df = task.user_df_id
 
     TasksService.create_task(task, session)
-
 
     #  make a prediction
     df = DFService.get_df_by_id(user_df, session)

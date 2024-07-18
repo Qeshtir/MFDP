@@ -110,12 +110,12 @@ async def create_task(
             },
         ),
     ],
-
     db: Session = Depends(get_session),
     user: str = Depends(authenticate),
 ):
     TasksService.create_task(task, db)
     return {"message": f"Task has been added", "id": task.id}
+
 
 @task_router.delete("/{id}")
 async def delete_task(
